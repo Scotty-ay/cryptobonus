@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 13% 7%;
+    --foreground: 0 0% 95%;
+
+    --card: 220 13% 10%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 220 13% 10%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 43 96% 50%;
+    --primary-foreground: 220 13% 7%;
+
+    --secondary: 220 13% 14%;
+    --secondary-foreground: 0 0% 85%;
+
+    --muted: 220 13% 14%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 43 96% 50%;
+    --accent-foreground: 220 13% 7%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 95%;
+
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
+    --ring: 43 96% 50%;
+
+    --radius: 0.5rem;
+
+    --gold-glow: 43 100% 60%;
+    --surface-elevated: 220 13% 12%;
+    --surface-hover: 220 13% 16%;
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --sidebar-background: 220 13% 7%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 43 96% 50%;
+    --sidebar-primary-foreground: 220 13% 7%;
+    --sidebar-accent: 220 13% 14%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 220 13% 18%;
+    --sidebar-ring: 43 96% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .gold-gradient {
+    background: linear-gradient(135deg, hsl(43, 96%, 50%), hsl(43, 100%, 60%));
+  }
+  .gold-text {
+    background: linear-gradient(135deg, hsl(43, 96%, 50%), hsl(43, 100%, 65%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glass-card {
+    background: hsl(220, 13%, 10%);
+    border: 1px solid hsl(220, 13%, 18%);
+    backdrop-filter: blur(12px);
+  }
+}
