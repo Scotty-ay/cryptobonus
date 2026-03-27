@@ -30,7 +30,7 @@ const HeroSection = ({ onApply }: HeroSectionProps) => {
           >
             <Zap className="h-4 w-4 text-primary" />
             <span className="text-sm text-primary font-medium">
-              Bonuses from $1,500 to 200 BTC
+              Bonuses from $1,500 to 30 BTC
             </span>
           </motion.div>
 
