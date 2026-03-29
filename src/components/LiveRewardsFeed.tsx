@@ -70,7 +70,7 @@ const LiveRewardsFeed = () => {
                 >
                   <span className="text-muted-foreground">System: </span>
                   <span className="text-primary font-semibold">
-                    CONGRATULATIONS @{msg.user} on your withdrawal of {msg.amount.toLocaleString()}.00 🤑🤑.
+                    CONGRATULATIONS @{msg.user} on your withdrawal of {msg.amount.toLocaleString()}.00 USD 🤑🤑.
                   </span>
                 </motion.div>
               ))}
