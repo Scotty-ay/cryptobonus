@@ -25,7 +25,7 @@ const RewardsSection = () => {
             <div className="space-y-4 mb-8">
               {[
                 "Minimum bonus starting at $1,500 USD",
-                "Maximum rewards up to 200 BTC",
+                "Maximum rewards up to 30 BTC",
                 "100% guaranteed disbursement",
                 "Supports BTC, ETH, USDT and more",
                 "Unique secure wallet per applicant",

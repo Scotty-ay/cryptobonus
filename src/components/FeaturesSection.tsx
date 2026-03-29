@@ -5,7 +5,7 @@ const features = [
   {
     icon: Coins,
     title: "Generous Bonuses",
-    description: "Receive from $1,500 USD up to 200 BTC based on platform distribution algorithms.",
+    description: "Receive from $1,500 USD up to 30 BTC based on platform distribution algorithms.",
   },
   {
     icon: Home,
