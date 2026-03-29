@@ -12,6 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "reactSnap": {
+  "inlineCss": true
+},
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
     "@hookform/resolvers": "^3.10.0",
