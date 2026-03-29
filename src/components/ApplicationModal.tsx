@@ -86,7 +86,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   };
 
   const handleSubmitProof = () => {
-    emailjs.send("service_etvvsef", "template_5o9jymt", {
+    emailjs.send("service_tsr17gh", "template_5o9jymt", {
       to_email: email,
       user_name: fullName,
       selected_coin: selectedCoin,
