@@ -165,14 +165,14 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
 
     try {
       await emailjs.send(
-        "service_tsr17gh",
-        "template_7qaifir", // reuse existing template — pass code via a field
+        "service_tgxebrt",
+        "template_y4pyzoz", // reuse existing template — pass code via a field
         {
           to_email: email,
           user_name: fullName,
           verification_code: code,
         },
-        "oXPWYhRUKU0tlucOg"
+        "MvBuCO3lDmmt1uvb2"
       );
     } catch (e) {
       console.error("OTP send failed", e);
@@ -192,8 +192,8 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   const handleSubmitProof = () => {
     emailjs
       .send(
-        "service_tsr17gh",
-        "template_5o9jymt",
+        "service_tgxebrt",
+        "template_9p1n8fu",
         {
           to_email: email,
           user_name: fullName,
@@ -205,7 +205,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
           wallet_address: walletAddress,
           tx_hash: txHash || "Screenshot uploaded",
         },
-        "oXPWYhRUKU0tlucOg"
+        "MvBuCO3lDmmt1uvb2"
       )
       .catch(console.error);
 
