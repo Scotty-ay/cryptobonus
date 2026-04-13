@@ -20,7 +20,7 @@ const Navbar = ({ onApply }: NavbarProps) => {
         </a>
 
         <div className="hidden md:flex items-center gap-8">
-          {["Features", "How It Works", "Rewards", "Payment"].map((item) => (
+          {["Features", "How It Works", "Rewards", "Payment", "Contact"].map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
@@ -47,7 +47,7 @@ const Navbar = ({ onApply }: NavbarProps) => {
 
       {mobileOpen && (
         <div className="md:hidden bg-background border-b border-border px-4 pb-4 space-y-3">
-          {["Features", "How It Works", "Rewards", "Payment"].map((item) => (
+          {["Features", "How It Works", "Rewards", "Payment", "Contact"].map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}

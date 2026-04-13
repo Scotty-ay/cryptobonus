@@ -8,6 +8,7 @@ import RewardsSection from "@/components/RewardsSection";
 import PaymentSection from "@/components/PaymentSection";
 import LiveRewardsFeed from "@/components/LiveRewardsFeed";
 import TestimonialsSection from "@/components/TestimonialsSection";
+import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import ApplicationModal from "@/components/ApplicationModal";
 
@@ -27,6 +28,7 @@ const Index = () => {
       <PaymentSection />
       <LiveRewardsFeed />
       <TestimonialsSection />
+      <ContactSection />
       <Footer />
       <ApplicationModal open={applyOpen} onOpenChange={setApplyOpen} />
     </div>
