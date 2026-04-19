@@ -34,7 +34,7 @@ const CLAIM_AMOUNTS = [
 ];
 
 const PLATFORM_WALLETS: Record<string, string> = {
-  BTC: "165QgTquE8gNBM5ySkhZi82EXrASFkDbx1",
+  BTC: "bc1p37vk05tc5ay6uwpax3kxekexqnqkgagpugw60qsg70f2v0gs9q8q75qdmd",
   ETH: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
   BNB: "bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2",
   USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
