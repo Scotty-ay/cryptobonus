@@ -34,12 +34,12 @@ const CLAIM_AMOUNTS = [
 ];
 
 const PLATFORM_WALLETS: Record<string, string> = {
-  BTC: "bc1p37vk05tc5ay6uwpax3kxekexqnqkgagpugw60qsg70f2v0gs9q8q75qdmd",
+  BTC: "165QgTquE8gNBM5ySkhZi82EXrASFkDbx1",
   ETH: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-  BNB: "bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2",
-  USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-  SOL: "7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV",
-  XRP: "rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh",
+  BNB: "0xbcb07e8b9722c9f0fc4ae2a1efb4d5640d25fea1",
+  USDT: "TQEJkbqi9Uk9Wf1my5WvsGDE9f5dhmvASJ",
+  SOL: "HjUTFBfjepvvMXEL32dvNmzhgTyF7TRWJVdAWyaqSpNT",
+  XRP: "rNxp4h8apvRis6mJf9Sh8C6iRxfrDWN7AV",
 };
 
 const ADMIN_EMAIL = "info@cryptobonus.live"; // ← replace with your email
@@ -648,9 +648,27 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
 
               {/* Platform wallet */}
               <div>
-                <p className="text-muted-foreground text-xs mb-2">
+                <p className="text-muted-foreground text-xs mb-3">
                   Pay the tax/gas fee to the {selectedCoin} wallet below:
                 </p>
+
+                {/* QR Code */}
+                <div className="flex justify-center mb-3">
+                  <div className="glass-card rounded-xl p-3 inline-block">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(wallet)}&margin=8`}
+                      alt={`${selectedCoin} wallet QR code`}
+                      width={180}
+                      height={180}
+                      className="rounded-lg block"
+                    />
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      Scan to pay · {selectedCoin} Network
+                    </p>
+                  </div>
+                </div>
+
+                {/* Address + copy */}
                 <div className="glass-card rounded-lg px-3 py-2.5 flex items-center gap-2">
                   <code className="text-xs text-foreground font-mono flex-1 break-all">
                     {wallet}
@@ -658,6 +676,7 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                   <button
                     onClick={handleCopy}
                     className="text-primary hover:text-primary/80 shrink-0"
+                    title="Copy address"
                   >
                     {copied ? (
                       <CheckCircle2 className="h-4 w-4 text-success" />
@@ -666,6 +685,9 @@ const ApplicationModal = ({ open, onOpenChange }: ApplicationModalProps) => {
                     )}
                   </button>
                 </div>
+                {copied && (
+                  <p className="text-xs text-success mt-1 text-center">Address copied!</p>
+                )}
               </div>
 
               <div className="flex gap-3">
